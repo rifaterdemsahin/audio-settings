@@ -205,17 +205,39 @@ def cmd_apply_profile(profile_name):
     print(f"[✓] Profile '{profile_name}' applied successfully!\n")
 
 def cmd_test_output(args):
-    """Play a test chime."""
+    """Play a test sound."""
     current = get_current_devices()
-    print(f"[*] Playing test chime through output: {current['output']} ...")
-    test_file = "/System/Library/Sounds/Ping.aiff"
-    if not os.path.exists(test_file):
-        test_file = "/System/Library/Sounds/Tink.aiff"
+    duration = getattr(args, "duration", 5) if hasattr(args, "duration") else 5
+    is_continuous = getattr(args, "continuous", False)
+
+    if is_continuous:
+        test_file = os.path.join(os.path.dirname(__file__), "assets", "test_tone_6s.wav")
+        print(f"[*] Playing 6-second continuous test melody through: {current['output']} ...")
+    else:
+        test_file = "/System/Library/Sounds/Ping.aiff"
+        if not os.path.exists(test_file):
+            test_file = "/System/Library/Sounds/Tink.aiff"
+        print(f"[*] Playing test chime (short 1.5s bell) through: {current['output']} ...")
+        print("    (Note: This is a short chime. Use '--continuous' to play a 6-second melody).")
+
     res = subprocess.run(["afplay", test_file])
     if res.returncode == 0:
         print("[✓] Playback complete! Chime played successfully.")
     else:
         print("[x] Error: afplay failed.")
+
+def cmd_test_device(device_name):
+    """Temporarily route output to specific device and play continuous tone."""
+    print(f"[*] Testing output on specific device: '{device_name}' ...")
+    prev = get_current_devices()
+    set_device(device_name, "output")
+    test_file = os.path.join(os.path.dirname(__file__), "assets", "test_tone_6s.wav")
+    if not os.path.exists(test_file):
+        test_file = "/System/Library/Sounds/Ping.aiff"
+    print(f"  [>] Playing 6-second test melody through {device_name}...")
+    subprocess.run(["afplay", test_file])
+    print(f"  [✓] Test completed on {device_name}.")
+
 
 def cmd_test_input(args):
     """Record 2 seconds of audio and analyze volume level."""
@@ -364,8 +386,15 @@ def main():
     p_fix.set_defaults(func=lambda args: cmd_apply_profile("studio"))
 
     # test-output
-    p_test_out = subparsers.add_parser("test-output", help="Play test chime on current output")
+    p_test_out = subparsers.add_parser("test-output", help="Play test sound on current output")
+    p_test_out.add_argument("--continuous", action="store_true", help="Play 6-second continuous melody instead of 1.5s chime")
     p_test_out.set_defaults(func=cmd_test_output)
+
+    # test-device
+    p_test_dev = subparsers.add_parser("test-device", help="Test continuous audio on a specific device")
+    p_test_dev.add_argument("name", help="Device name (e.g. 'Scarlett 2i2 USB', 'Elgato Wave:3', 'Mac mini Speakers', 'LG HDR 4K')")
+    p_test_dev.set_defaults(func=lambda args: cmd_test_device(args.name))
+
 
     # test-input
     p_test_in = subparsers.add_parser("test-input", help="Record and verify microphone input")
