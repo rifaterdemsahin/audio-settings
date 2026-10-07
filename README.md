@@ -137,3 +137,4 @@ To disable Continuity Camera if not needed:
 
 - **Output Verification**: Tested via `afplay /System/Library/Sounds/Ping.aiff` on `Scarlett 2i2 USB` (passed).
 - **Input Verification**: Tested via `ffmpeg -f avfoundation` on `Elgato Wave:3` (captured 49,230 bytes) and `Scarlett 2i2 USB` (captured 339,022 bytes with signal detected at `-21.0 dB`).
+# cursor-agent-repo
