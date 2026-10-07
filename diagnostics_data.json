@@ -1,0 +1,250 @@
+{
+  "devices": [
+    {
+      "name": "LG HDR 4K",
+      "manufacturer": "GSM",
+      "sample_rate": 48000,
+      "transport": "coreaudio_device_type_displayport",
+      "input_channels": 0,
+      "output_channels": 2,
+      "is_default_output": false,
+      "is_default_input": false,
+      "is_default_system": false
+    },
+    {
+      "name": "StudioiPhone14 Microphone",
+      "manufacturer": "Apple Inc.",
+      "sample_rate": 48000,
+      "transport": "coreaudio_device_type_unknown",
+      "input_channels": 1,
+      "output_channels": 0,
+      "is_default_output": false,
+      "is_default_input": false,
+      "is_default_system": false
+    },
+    {
+      "name": "Elgato Wave:3",
+      "manufacturer": "Elgato Systems",
+      "sample_rate": 48000,
+      "transport": "coreaudio_device_type_usb",
+      "input_channels": 1,
+      "output_channels": 2,
+      "is_default_output": false,
+      "is_default_input": true,
+      "is_default_system": false
+    },
+    {
+      "name": "Scarlett 2i2 USB",
+      "manufacturer": "Focusrite",
+      "sample_rate": 48000,
+      "transport": "coreaudio_device_type_usb",
+      "input_channels": 2,
+      "output_channels": 2,
+      "is_default_output": true,
+      "is_default_input": false,
+      "is_default_system": true
+    },
+    {
+      "name": "NDI Audio",
+      "manufacturer": "NewTek",
+      "sample_rate": 44100,
+      "transport": "coreaudio_device_type_virtual",
+      "input_channels": 2,
+      "output_channels": 0,
+      "is_default_output": false,
+      "is_default_input": false,
+      "is_default_system": false
+    },
+    {
+      "name": "Mac mini Speakers",
+      "manufacturer": "Apple Inc.",
+      "sample_rate": 48000,
+      "transport": "coreaudio_device_type_builtin",
+      "input_channels": 0,
+      "output_channels": 2,
+      "is_default_output": false,
+      "is_default_input": false,
+      "is_default_system": false
+    },
+    {
+      "name": "Elgato Wave Link Chat Mix",
+      "manufacturer": "Corsair Memory, Inc.",
+      "sample_rate": 48000,
+      "transport": "coreaudio_device_type_virtual",
+      "input_channels": 2,
+      "output_channels": 0,
+      "is_default_output": false,
+      "is_default_input": false,
+      "is_default_system": false
+    },
+    {
+      "name": "Elgato Wave Link Stream Mix",
+      "manufacturer": "Corsair Memory, Inc.",
+      "sample_rate": 48000,
+      "transport": "coreaudio_device_type_virtual",
+      "input_channels": 2,
+      "output_channels": 0,
+      "is_default_output": false,
+      "is_default_input": false,
+      "is_default_system": false
+    },
+    {
+      "name": "Wave Link Stream",
+      "manufacturer": "Corsair Memory, Inc.",
+      "sample_rate": 96000,
+      "transport": "coreaudio_device_type_virtual",
+      "input_channels": 2,
+      "output_channels": 0,
+      "is_default_output": false,
+      "is_default_input": false,
+      "is_default_system": false
+    },
+    {
+      "name": "Elgato Wave Link Personal Mix",
+      "manufacturer": "Corsair Memory, Inc.",
+      "sample_rate": 48000,
+      "transport": "coreaudio_device_type_virtual",
+      "input_channels": 2,
+      "output_channels": 0,
+      "is_default_output": false,
+      "is_default_input": false,
+      "is_default_system": false
+    },
+    {
+      "name": "Microsoft Teams Audio",
+      "manufacturer": "Microsoft Corp.",
+      "sample_rate": 48000,
+      "transport": "coreaudio_device_type_virtual",
+      "input_channels": 2,
+      "output_channels": 2,
+      "is_default_output": false,
+      "is_default_input": false,
+      "is_default_system": false
+    },
+    {
+      "name": "NDI Audio",
+      "manufacturer": "Apple Inc.",
+      "sample_rate": 48000,
+      "transport": "coreaudio_device_type_virtual",
+      "input_channels": 0,
+      "output_channels": 6,
+      "is_default_output": false,
+      "is_default_input": false,
+      "is_default_system": false
+    }
+  ],
+  "hal_plugins": "total 0\ndrwxr-xr-x  9 root  wheel  288 12 Sep 08:53 .\ndrwxr-xr-x  6 root  wheel  192 13 Aug 03:51 ..\ndrwxr-xr-x@ 3 root  wheel   96 25 Jan  2023 ACE.driver\ndrwxr-xr-x  3 root  wheel   96 12 Oct  2020 MSTeamsAudioDevice.driver\ndrwxr-xr-x  3 root  wheel   96 20 Dec  2024 NDIAudio.driver\ndrwxr-xr-x  3 root  wheel   96 20 Dec  2024 NDIAudioOut.driver\ndrwxr-xr-x  3 root  wheel   96 13 Aug 03:51 ParrotAudioPlugin.driver\ndrwxr-xr-x  3 root  wheel   96 23 Jan  2026 WaveLink3VirtualAudio.driver\ndrwxr-xr-x  3 root  wheel   96  9 Dec  2020 WaveLinkVirtualAudio.driver",
+  "audio_processes": [
+    "223  34.4 1567:12.18 /usr/sbin/coreaudiod",
+    "305   0.0   0:00.01 Core Audio Driver (ACE.driver)",
+    "309   0.0   1:21.03 /usr/libexec/audiomxd",
+    "310   0.0  39:02.28 /usr/libexec/audioclocksyncd",
+    "314   1.8   2:34.31 Core Audio Driver (MSTeamsAudioDevice.driver)",
+    "333   2.7 3307:21.10 /System/Library/Audio/Plug-Ins/usbaudio.bundle/Contents/MacOS/usbaudiod",
+    "352   0.7   0:17.96 Core Audio Driver (NDIAudio.driver)",
+    "353   0.0  53:10.34 /usr/libexec/audioanalyticsd",
+    "357   0.5   0:13.37 Core Audio Driver (NDIAudioOut.driver)",
+    "359   0.0   0:00.03 Core Audio Driver (ParrotAudioPlugin.driver)",
+    "361   3.1  95:30.57 Core Audio Driver (WaveLink3VirtualAudio.driver)",
+    "362   2.4   1:22.64 Core Audio Driver (WaveLinkVirtualAudio.driver)",
+    "404   0.1  69:24.55 /Applications/Focusrite Control.app/Contents/Library/LoginItems/FocusriteControlServer.app/Contents/MacOS/FocusriteControlServer",
+    "6652   0.3   0:05.02 /System/Library/CoreServices/audioaccessoryd",
+    "74221   0.0   0:00.20 /System/Library/Frameworks/AudioToolbox.framework/AudioComponentRegistrar",
+    "90837   6.2 373:25.57 /Applications/Elgato Wave Link.app/Contents/MacOS/WaveLinkMacOS"
+  ],
+  "output_tests": {
+    "Scarlett 2i2 USB": {
+      "switch_result": {
+        "success": true,
+        "returncode": 0,
+        "stdout": "output audio device set to \"Scarlett 2i2 USB\"",
+        "stderr": "",
+        "elapsed_sec": 0.087
+      },
+      "play_result": {
+        "success": true,
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "elapsed_sec": 7.267
+      },
+      "total_latency_sec": 7.268,
+      "status": "SUCCESS"
+    },
+    "Elgato Wave:3": {
+      "switch_result": {
+        "success": true,
+        "returncode": 0,
+        "stdout": "output audio device set to \"Elgato Wave:3\"",
+        "stderr": "",
+        "elapsed_sec": 0.139
+      },
+      "play_result": {
+        "success": false,
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "Error: AudioQueueStart failed (-66681)",
+        "elapsed_sec": 16.164
+      },
+      "total_latency_sec": 16.165,
+      "status": "FAILED"
+    },
+    "Mac mini Speakers": {
+      "switch_result": {
+        "success": true,
+        "returncode": 0,
+        "stdout": "output audio device set to \"Mac mini Speakers\"",
+        "stderr": "",
+        "elapsed_sec": 0.131
+      },
+      "play_result": {
+        "success": true,
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "elapsed_sec": 7.076
+      },
+      "total_latency_sec": 7.076,
+      "status": "SUCCESS"
+    },
+    "LG HDR 4K": {
+      "switch_result": {
+        "success": true,
+        "returncode": 0,
+        "stdout": "output audio device set to \"LG HDR 4K\"",
+        "stderr": "",
+        "elapsed_sec": 0.126
+      },
+      "play_result": {
+        "success": true,
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "elapsed_sec": 6.961
+      },
+      "total_latency_sec": 6.961,
+      "status": "SUCCESS"
+    }
+  },
+  "input_tests": {
+    "Elgato Wave:3": {
+      "status": "RECORDING_FAILED",
+      "device_index": ":4",
+      "rec_res": {
+        "success": false,
+        "timeout": true,
+        "elapsed_sec": 15
+      }
+    },
+    "Scarlett 2i2 USB": {
+      "status": "RECORDING_SUCCESS",
+      "bytes": 263502,
+      "volume": {
+        "[Parsed_volumedetect_0 @ 0xca0c48900] mean_volume": "[Parsed_volumedetect_0 @ 0xca0c48900] mean_volume: -62.9 dB",
+        "[Parsed_volumedetect_0 @ 0xca0c48900] max_volume": "[Parsed_volumedetect_0 @ 0xca0c48900] max_volume: -42.3 dB"
+      },
+      "device_index": ":8",
+      "elapsed_sec": 2.471
+    }
+  }
+}

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Audio Settings CLI for macOS (Mac mini Video Production Setup)
+Audio Settings CLI for macOS (Mac mini Video Production Workstation)
 Manages audio input/output devices, volume, diagnostics, and profiles.
+Smartly handles Elgato Wave Link locks and Focusrite Scarlett routing.
 """
 
 import sys
@@ -14,14 +15,15 @@ import re
 
 PROFILES = {
     "studio": {
-        "description": "Video production standard: Mic = Elgato Wave:3, Out = Scarlett 2i2 USB",
+        "description": "Standard Video Production: Mic = Elgato Wave:3 / Wave Link, Out = Scarlett 2i2 USB",
         "output": "Scarlett 2i2 USB",
-        "input": "Elgato Wave:3",
+        "input_wavelink": "Wave Link Stream",
+        "input_direct": "Elgato Wave:3",
         "system": "Scarlett 2i2 USB",
         "input_volume": 85,
     },
     "scarlett": {
-        "description": "All Focusrite: Mic = Scarlett 2i2 USB, Out = Scarlett 2i2 USB",
+        "description": "All Focusrite: Mic = Scarlett 2i2 USB, Out = Scarlett 2i2 USB (Bypasses Wave Link)",
         "output": "Scarlett 2i2 USB",
         "input": "Scarlett 2i2 USB",
         "system": "Scarlett 2i2 USB",
@@ -35,16 +37,18 @@ PROFILES = {
         "input_volume": 85,
     },
     "macmini": {
-        "description": "Built-in Mac mini fallback: Mic = Elgato Wave:3, Out = Mac mini Speakers",
+        "description": "Built-in fallback: Mic = Scarlett / Wave, Out = Mac mini Speakers",
         "output": "Mac mini Speakers",
-        "input": "Elgato Wave:3",
+        "input_wavelink": "Wave Link Stream",
+        "input_direct": "Scarlett 2i2 USB",
         "system": "Mac mini Speakers",
         "input_volume": 85,
     },
     "monitor": {
-        "description": "DisplayPort monitor: Mic = Elgato Wave:3, Out = LG HDR 4K",
+        "description": "DisplayPort monitor: Out = LG HDR 4K",
         "output": "LG HDR 4K",
-        "input": "Elgato Wave:3",
+        "input_wavelink": "Wave Link Stream",
+        "input_direct": "Scarlett 2i2 USB",
         "system": "Scarlett 2i2 USB",
         "input_volume": 85,
     },
@@ -55,10 +59,13 @@ def run_cmd(cmd, timeout=15):
     try:
         res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout)
         return res.stdout.strip()
-    except subprocess.TimeoutExpired:
-        return None
     except Exception:
         return None
+
+def is_wavelink_running():
+    """Check if Elgato Wave Link app is currently active."""
+    out = run_cmd(["pgrep", "-x", "WaveLinkMacOS"])
+    return bool(out and out.strip())
 
 def check_dependencies():
     """Ensure SwitchAudioSource is available."""
@@ -121,7 +128,13 @@ def get_hardware_info():
         return {}
 
 def set_device(device_name, device_type="output"):
-    """Set audio device for output, input, or system."""
+    """Set audio device for output, input, or system with safety checks."""
+    wl_active = is_wavelink_running()
+    if device_type == "output" and device_name == "Elgato Wave:3" and wl_active:
+        print("  [!] WARNING: 'Elgato Wave:3' output is locked by Elgato Wave Link app.")
+        print("      Routing output to 'Scarlett 2i2 USB' instead to prevent AudioQueue -66681 error.")
+        device_name = "Scarlett 2i2 USB"
+
     res = subprocess.run(
         ["SwitchAudioSource", "-s", device_name, "-t", device_type],
         stdout=subprocess.PIPE,
@@ -148,6 +161,7 @@ def cmd_status(args):
     vol = get_volume_settings()
     outputs, inputs = get_available_devices()
     hw_info = get_hardware_info()
+    wl_active = is_wavelink_running()
 
     print("=" * 64)
     print("            macOS Audio Settings - Current Status")
@@ -156,47 +170,63 @@ def cmd_status(args):
     print(f" Input Device  : {current['input']}")
     print(f" System Alerts : {current['system']}")
     print(f" Volume State  : {vol}")
+    print(f" Wave Link App : {'RUNNING (Exclusive hardware lock active)' if wl_active else 'Not Running'}")
     print("-" * 64)
     print(" Available Output Devices:")
     for d in outputs:
         marker = " [ACTIVE]" if d == current['output'] else ""
         srate = f" ({hw_info[d]['srate']} Hz)" if d in hw_info and hw_info[d]['srate'] else ""
-        print(f"   • {d:<24}{srate}{marker}")
+        note = " [LOCKED BY WAVELINK]" if d == "Elgato Wave:3" and wl_active else ""
+        print(f"   • {d:<24}{srate}{note}{marker}")
     print("\n Available Input Devices:")
     for d in inputs:
         marker = " [ACTIVE]" if d == current['input'] else ""
         srate = f" ({hw_info[d]['srate']} Hz)" if d in hw_info and hw_info[d]['srate'] else ""
-        print(f"   • {d:<24}{srate}{marker}")
+        note = " [RECOMMENDED FOR WAVELINK]" if d == "Wave Link Stream" and wl_active else ""
+        print(f"   • {d:<24}{srate}{note}{marker}")
     print("=" * 64)
 
 def cmd_apply_profile(profile_name):
-    """Apply a predefined profile."""
+    """Apply a predefined profile with smart Wave Link detection."""
     check_dependencies()
     if profile_name not in PROFILES:
         print(f"[x] Error: Unknown profile '{profile_name}'. Available: {', '.join(PROFILES.keys())}")
         sys.exit(1)
 
     prof = PROFILES[profile_name]
+    wl_active = is_wavelink_running()
     print(f"[*] Applying Profile: {profile_name.upper()}")
     print(f"    Description: {prof['description']}")
+    if wl_active:
+        print("    Wave Link Status: Active -> Applying virtual routing for stability.")
 
     outputs, inputs = get_available_devices()
 
-    # Output
-    if prof["output"] in outputs:
-        set_device(prof["output"], "output")
+    # Determine desired input
+    if "input" in prof:
+        target_input = prof["input"]
+    elif wl_active and "input_wavelink" in prof:
+        target_input = prof["input_wavelink"]
     else:
-        print(f"  [!] Warning: Output '{prof['output']}' not detected.")
+        target_input = prof.get("input_direct", "Scarlett 2i2 USB")
+
+    # Output
+    target_output = prof["output"]
+    if target_output in outputs:
+        set_device(target_output, "output")
+    else:
+        print(f"  [!] Warning: Desired output '{target_output}' not detected.")
 
     # Input
-    if prof["input"] in inputs:
-        set_device(prof["input"], "input")
+    if target_input in inputs:
+        set_device(target_input, "input")
     else:
-        print(f"  [!] Warning: Input '{prof['input']}' not detected.")
+        print(f"  [!] Warning: Desired input '{target_input}' not detected.")
 
     # System alerts
-    if prof["system"] in outputs:
-        set_device(prof["system"], "system")
+    target_system = prof.get("system", "Scarlett 2i2 USB")
+    if target_system in outputs:
+        set_device(target_system, "system")
 
     # Input volume
     if "input_volume" in prof:
@@ -205,9 +235,8 @@ def cmd_apply_profile(profile_name):
     print(f"[✓] Profile '{profile_name}' applied successfully!\n")
 
 def cmd_test_output(args):
-    """Play a test sound."""
+    """Play test sound."""
     current = get_current_devices()
-    duration = getattr(args, "duration", 5) if hasattr(args, "duration") else 5
     is_continuous = getattr(args, "continuous", False)
 
     if is_continuous:
@@ -218,7 +247,7 @@ def cmd_test_output(args):
         if not os.path.exists(test_file):
             test_file = "/System/Library/Sounds/Tink.aiff"
         print(f"[*] Playing test chime (short 1.5s bell) through: {current['output']} ...")
-        print("    (Note: This is a short chime. Use '--continuous' to play a 6-second melody).")
+        print("    (Note: This is a short 1.5s bell chime. Use '--continuous' for a 6s melody).")
 
     res = subprocess.run(["afplay", test_file])
     if res.returncode == 0:
@@ -229,15 +258,22 @@ def cmd_test_output(args):
 def cmd_test_device(device_name):
     """Temporarily route output to specific device and play continuous tone."""
     print(f"[*] Testing output on specific device: '{device_name}' ...")
-    prev = get_current_devices()
+    if device_name == "Elgato Wave:3" and is_wavelink_running():
+        print("[!] Cannot play directly to 'Elgato Wave:3' while Wave Link app is running.")
+        print("    Elgato Wave Link has locked the hardware (AudioQueue error -66681).")
+        print("    To test headphones connected to Wave:3, use Wave Link Monitor or close Wave Link.")
+        return
+
     set_device(device_name, "output")
     test_file = os.path.join(os.path.dirname(__file__), "assets", "test_tone_6s.wav")
     if not os.path.exists(test_file):
         test_file = "/System/Library/Sounds/Ping.aiff"
     print(f"  [>] Playing 6-second test melody through {device_name}...")
-    subprocess.run(["afplay", test_file])
-    print(f"  [✓] Test completed on {device_name}.")
-
+    res = subprocess.run(["afplay", test_file])
+    if res.returncode == 0:
+        print(f"  [✓] Test completed successfully on {device_name}.")
+    else:
+        print(f"  [!] Playback failed on {device_name}.")
 
 def cmd_test_input(args):
     """Record 2 seconds of audio and analyze volume level."""
@@ -247,8 +283,7 @@ def cmd_test_input(args):
     ffmpeg = shutil.which("ffmpeg")
 
     if not ffmpeg:
-        print("[!] ffmpeg not found in PATH.")
-        print("[*] Install via: brew install ffmpeg")
+        print("[!] ffmpeg not found in PATH. Install via: brew install ffmpeg")
         return
 
     print("  [>] Recording 2 seconds of audio into test buffer...")
@@ -308,13 +343,17 @@ def cmd_doctor(args):
     ff = shutil.which("ffmpeg")
     print(f"[*] ffmpeg CLI          : {'Installed (' + ff + ')' if ff else 'MISSING (brew install ffmpeg)'}")
 
-    # 3. CoreAudio Daemon
+    # 3. Wave Link App Check
+    wl_active = is_wavelink_running()
+    print(f"[*] Elgato Wave Link    : {'Running (locks physical Wave:3)' if wl_active else 'Not Running'}")
+
+    # 4. CoreAudio Daemon
     ps_res = run_cmd(["ps", "-A", "-o", "%cpu,pid,command"])
     core_lines = [l for l in (ps_res or "").splitlines() if "coreaudiod" in l]
     for line in core_lines:
         print(f"[*] CoreAudio daemon    : {line.strip()[:70]}")
 
-    # 4. Hardware Devices & Sample Rates
+    # 5. Hardware Devices & Sample Rates
     outputs, inputs = get_available_devices()
     hw_info = get_hardware_info()
     print("\n[*] Hardware Device Inventory:")
@@ -327,34 +366,30 @@ def cmd_doctor(args):
         srate_str = f" | {hw_info[hw]['srate']} Hz" if hw in hw_info and hw_info[hw].get("srate") else ""
         print(f"   • {hw:<20}: {status_str}{srate_str}")
 
-    # 5. Routing Analysis
+    # 6. Routing Analysis
     current = get_current_devices()
     print("\n[*] Routing Configuration Health:")
-    if current["output"] == "Mac mini Speakers":
+    if current["output"] == "Elgato Wave:3" and wl_active:
+        print("   [x] ERROR: Output is set to 'Elgato Wave:3' while Wave Link is running!")
+        print("       This triggers AudioQueueStart -66681 error (audio drops after 1s).")
+        print("       Fix: Run './audio.sh fix' to route output to 'Scarlett 2i2 USB'.")
+    elif current["output"] == "Mac mini Speakers":
         print("   [!] WARNING: Audio Output is set to internal Mac mini Speakers!")
-        print("       Run './audio_settings.py fix' to switch to Scarlett 2i2 USB.")
+        print("       Fix: Run './audio.sh fix' to route output to 'Scarlett 2i2 USB'.")
     else:
         print(f"   [✓] Output routed to external interface: {current['output']}")
 
-    if current["input"] == "Wave Link Stream":
-        print("   [!] CAUTION: Audio Input is set to virtual 'Wave Link Stream' (96kHz).")
-        print("       Ensure Wave Link app is open and unmuted, or run './audio_settings.py fix' for direct mic.")
+    if current["input"] == "Elgato Wave:3" and wl_active:
+        print("   [!] WARNING: Input is set to physical 'Elgato Wave:3' while Wave Link is running.")
+        print("       Wave Link locks physical mic. Route to 'Wave Link Stream' instead.")
+        print("       Fix: Run './audio.sh fix'.")
     else:
-        print(f"   [✓] Input routed to hardware microphone: {current['input']}")
-
-    # 6. Sample Rate Mismatch Warning
-    if "Wave Link Stream" in hw_info and "Scarlett 2i2 USB" in hw_info:
-        wl_rate = hw_info["Wave Link Stream"].get("srate")
-        sc_rate = hw_info["Scarlett 2i2 USB"].get("srate")
-        if wl_rate and sc_rate and wl_rate != sc_rate:
-            print(f"\n   [i] Notice: Sample rate difference detected:")
-            print(f"       Scarlett 2i2 USB = {sc_rate} Hz vs Wave Link Stream = {wl_rate} Hz.")
-            print(f"       In OBS/DAW video workflows, matching both to 48000 Hz in Audio MIDI Setup is recommended.")
+        print(f"   [✓] Input device correctly aligned: {current['input']}")
 
     print("\n" + "=" * 64)
 
 def cmd_restart_daemon(args):
-    """Explain how to restart CoreAudio if frozen."""
+    """Explain how to restart CoreAudio."""
     print("=" * 64)
     print("                 CoreAudio Daemon Restart")
     print("=" * 64)
@@ -387,14 +422,13 @@ def main():
 
     # test-output
     p_test_out = subparsers.add_parser("test-output", help="Play test sound on current output")
-    p_test_out.add_argument("--continuous", action="store_true", help="Play 6-second continuous melody instead of 1.5s chime")
+    p_test_out.add_argument("--continuous", action="store_true", help="Play 6-second continuous melody")
     p_test_out.set_defaults(func=cmd_test_output)
 
     # test-device
     p_test_dev = subparsers.add_parser("test-device", help="Test continuous audio on a specific device")
-    p_test_dev.add_argument("name", help="Device name (e.g. 'Scarlett 2i2 USB', 'Elgato Wave:3', 'Mac mini Speakers', 'LG HDR 4K')")
+    p_test_dev.add_argument("name", help="Device name (e.g. 'Scarlett 2i2 USB', 'Mac mini Speakers', 'LG HDR 4K')")
     p_test_dev.set_defaults(func=lambda args: cmd_test_device(args.name))
-
 
     # test-input
     p_test_in = subparsers.add_parser("test-input", help="Record and verify microphone input")
