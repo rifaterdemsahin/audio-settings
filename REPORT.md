@@ -81,8 +81,11 @@ The CLI tool [`audio_settings.py`](file:///Users/rifaterdemsahin/projects/audio-
 3. **Continuous Audio Test Support**:
    - Added `--continuous` flag to `./audio.sh test-output` using `assets/test_tone_6s.wav`.
    - Added `./audio.sh test-device "<Device Name>"` for isolated hardware checks.
-4. **Enhanced Diagnostic Suite**:
-   - Integrated hardware inventory, sample rate checks (48 kHz vs 96 kHz), driver inspection, and daemon health into `./audio.sh doctor`.
+4. **10-Second Cutout Resolution & Browser Rebinding**:
+   - Diagnosed CoreAudio `libAudioIssueDetector.dylib` reporting `-120 dB` RMS silence and `usbaudiod` microframe timestamp calcErrors (>12,000 ns).
+   - Added `./audio.sh fix-browser` to terminate stale browser `AudioService` workers and rebind audio contexts to Scarlett 2i2 USB.
+5. **Interactive Web Dashboard (`index.html`)**:
+   - Built a browser-based diagnostic dashboard with continuous audio player, loop mode, live frequency canvas visualizer, and deployment to GitHub Pages via `static.yml`.
 
 ---
 
@@ -91,6 +94,9 @@ The CLI tool [`audio_settings.py`](file:///Users/rifaterdemsahin/projects/audio-
 ```bash
 # Apply verified stable settings (Scarlett out + Wave Link in)
 ./audio.sh fix
+
+# Rebind browser audio streams if sound drops in Chrome/Safari
+./audio.sh fix-browser
 
 # Verify continuous 6-second audio playback
 ./audio.sh test-output --continuous
@@ -101,3 +107,4 @@ The CLI tool [`audio_settings.py`](file:///Users/rifaterdemsahin/projects/audio-
 # Run health check & doctor audit
 ./audio.sh doctor
 ```
+

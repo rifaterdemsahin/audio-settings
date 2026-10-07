@@ -66,9 +66,15 @@ Outputs the active output, input, system alert device, and all detected devices.
 ```
 Automatically configures:
 - Primary Output: `Scarlett 2i2 USB`
-- Primary Input: `Elgato Wave:3`
+- Primary Input: `Wave Link Stream` (when Wave Link is running) or `Elgato Wave:3`
 - System Alerts: `Scarlett 2i2 USB`
 - Input Gain: `85%`
+
+### Refresh Browser Audio & Fix 10-Second Cutouts
+```bash
+./audio.sh fix-browser
+```
+Terminates stale browser audio helper workers (`Google Chrome Helper AudioService`), resets CoreAudio buffer channels, and cleanly rebinds playback to `Scarlett 2i2 USB`.
 
 ### Run System Health Check ("Doctor")
 ```bash
@@ -78,14 +84,23 @@ Audits:
 - `switchaudio-osx` CLI availability
 - `ffmpeg` multimedia framework availability
 - `coreaudiod` CPU usage and status
+- Elgato Wave Link app status and hardware lock detection
 - Detection of all physical hardware interfaces
 - Sample rate consistency check (identifies 48 kHz vs 96 kHz mismatches)
 
 ### Test Audio Output
 ```bash
+# Play short 1.5s system chime
 ./audio.sh test-output
+
+# Play continuous 6-second multi-frequency test melody
+./audio.sh test-output --continuous
+
+# Test specific hardware destination
+./audio.sh test-device "Scarlett 2i2 USB"
+./audio.sh test-device "Mac mini Speakers"
+./audio.sh test-device "LG HDR 4K"
 ```
-Plays a test chime through the currently active output device to verify speaker/headphone sound.
 
 ### Test Microphone Recording
 ```bash
@@ -105,22 +120,44 @@ Switch between setups with a single command:
 
 | Profile | Output Device | Input Device | Purpose |
 | :--- | :--- | :--- | :--- |
-| **`studio`** | `Scarlett 2i2 USB` | `Elgato Wave:3` | **Default Video Production**: Mic = Elgato Wave:3, Output = Scarlett monitors/headphones. |
+| **`studio`** | `Scarlett 2i2 USB` | `Wave Link Stream` / `Elgato Wave:3` | **Default Video Production**: Wave Link virtual mic (or Wave:3), Output = Scarlett monitors/headphones. |
 | **`scarlett`** | `Scarlett 2i2 USB` | `Scarlett 2i2 USB` | **All-Focusrite**: Mic plugged into Scarlett XLR channel 1/2, Output = Scarlett monitors. |
 | **`wavelink`** | `Scarlett 2i2 USB` | `Wave Link Stream` | **Streaming/Submix**: Uses Elgato Wave Link software mixer routing. |
-| **`macmini`** | `Mac mini Speakers` | `Elgato Wave:3` | **Fallback**: Direct internal Mac mini chassis speaker output. |
-| **`monitor`** | `LG HDR 4K` | `Elgato Wave:3` | **Display Audio**: Routes output to the LG 4K display. |
+| **`macmini`** | `Mac mini Speakers` | `Wave Link Stream` / `Scarlett` | **Fallback**: Direct internal Mac mini chassis speaker output. |
+| **`monitor`** | `LG HDR 4K` | `Wave Link Stream` / `Scarlett` | **Display Audio**: Routes output to the LG 4K display. |
 
 ---
 
-## 5. Troubleshooting & Maintenance
+## 5. Comprehensive Fixes Inventory
+
+1. **Fix 1: Output Destination Correction**  
+   Switched system default output from low-quality built-in `Mac mini Speakers` to the studio `Scarlett 2i2 USB` DAC.
+2. **Fix 2: Elgato Wave Link Hardware Lock & Error `-66681` Prevention**  
+   Detected background `WaveLinkMacOS` process. Guarded output switching to prevent sending audio directly to physical `Elgato Wave:3` (which triggers `AudioQueueStart (-66681)` and drops audio after 1 second). Dynamically mapped mic input to `Wave Link Stream`.
+3. **Fix 3: Input Gain Calibration**  
+   Programmatically raised software input gain from an attenuated `38%` to optimal `85%`.
+4. **Fix 4: Continuous Multi-Tone Testing**  
+   Added `assets/test_tone_6s.wav` and `./audio.sh test-output --continuous` to replace the ambiguous 1.5-second `Ping.aiff` chime.
+5. **Fix 5: 10-Second Cutout Resolution (`fix-browser` & USB Clock Drift)**  
+   Diagnosed `libAudioIssueDetector` (-120 dB silence) and `usbaudiod` microframe timestamp drift. Created `./audio.sh fix-browser` to flush stale Chrome audio helper workers and rebind audio contexts cleanly.
+6. **Fix 6: Interactive Web Dashboard & GitHub Pages Deployment**  
+   Created `index.html` with an embedded Web Audio API player, continuous tone loop mode, live frequency visualizer, and diagnostics summary.
+
+---
+
+## 6. Troubleshooting & Maintenance
 
 ### If Audio Freezes or CoreAudio Daemon Hangs
-If a wireless device or USB unplug causes CoreAudio to become unresponsive:
+If a wireless device or USB unplug causes CoreAudio to become unresponsive or microframe clock drift accumulates:
 ```bash
 sudo killall coreaudiod
 ```
-macOS `launchd` will automatically restart the audio daemon cleanly within 2 seconds without requiring a reboot.
+macOS `launchd` will automatically restart both `coreaudiod` and `usbaudiod` cleanly within 2 seconds without requiring a reboot.
+
+### If Audio Cuts Out in Web Browser (Chrome/Safari)
+```bash
+./audio.sh fix-browser
+```
 
 ### Sample Rates for Video Production (48 kHz Standard)
 In professional video production (OBS, DaVinci Resolve, Final Cut Pro, Premiere):
@@ -133,11 +170,3 @@ In professional video production (OBS, DaVinci Resolve, Final Cut Pro, Premiere)
 If an iPhone is paired via Continuity Camera (`StudioiPhone14`), CoreAudio queries may stall if the phone is asleep or out of range. 
 To disable Continuity Camera if not needed:
 `System Settings` -> `General` -> `AirPlay & Continuity` -> toggle off **Continuity Camera**.
-
----
-
-## 6. Verification Log
-
-- **Output Verification**: Tested via `afplay /System/Library/Sounds/Ping.aiff` on `Scarlett 2i2 USB` (passed).
-- **Input Verification**: Tested via `ffmpeg -f avfoundation` on `Elgato Wave:3` (captured 49,230 bytes) and `Scarlett 2i2 USB` (captured 339,022 bytes with signal detected at `-21.0 dB`).
-# cursor-agent-repo
