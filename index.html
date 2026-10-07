@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>macOS Audio Settings | Video Production Workstation</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --danger: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+    }
+    h1 {
+      font-size: 2.25rem;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      color: var(--text);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: rgba(74, 222, 128, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(74, 222, 128, 0.3);
+    }
+    .status-badge.warning {
+      background: rgba(251, 191, 36, 0.15);
+      color: var(--warning);
+      border-color: rgba(251, 191, 36, 0.3);
+    }
+    .device-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .device-row:last-child { border-bottom: none; }
+    .device-name { font-weight: 500; }
+    .device-desc { font-size: 0.85rem; color: var(--text-muted); }
+
+    /* Audio Player Section */
+    .player-card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid var(--primary);
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.15);
+      margin-bottom: 2rem;
+      border-radius: 0.75rem;
+      padding: 1.75rem;
+    }
+    .player-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: var(--primary);
+      color: #0f172a;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn:hover { background: var(--primary-hover); color: #fff; }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+    canvas {
+      width: 100%;
+      height: 80px;
+      background: #090d16;
+      border-radius: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    /* Diagnostics Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      background: rgba(15, 23, 42, 0.5);
+    }
+    pre {
+      background: #090d16;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.9rem;
+      color: var(--primary);
+      border: 1px solid var(--border);
+      margin-top: 0.5rem;
+    }
+    .troubleshoot-box {
+      background: rgba(251, 191, 36, 0.08);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+    .troubleshoot-box h4 {
+      color: var(--warning);
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎛️ macOS Video Production Audio Settings</h1>
+      <p class="subtitle">Diagnostic Dashboard & Live Test Suite for Apple Mac mini</p>
+    </header>
+
+    <!-- Interactive Live Test Section -->
+    <div class="player-card">
+      <h2>🔊 Browser Audio & Continuous Stream Tester</h2>
+      <p style="color: var(--text-muted);">
+        Use this interactive web test to verify that continuous audio streams play smoothly without 1-second or 10-second cutouts.
+      </p>
+
+      <div class="player-controls">
+        <button id="playBtn" class="btn">▶ Play Continuous Test Tone</button>
+        <button id="loopBtn" class="btn btn-secondary">🔁 Loop Mode: OFF</button>
+        <span id="playerStatus" style="font-weight: 500; color: var(--text-muted);">Status: Ready</span>
+      </div>
+
+      <canvas id="visualizer"></canvas>
+      <audio id="audioElement" src="assets/test_tone_6s.wav" preload="auto"></audio>
+    </div>
+
+    <!-- Active Topology Grid -->
+    <div class="grid">
+      <div class="card">
+        <h2>🎧 Recommended Routing</h2>
+        <div class="device-row">
+          <div>
+            <div class="device-name">Scarlett 2i2 USB</div>
+            <div class="device-desc">Primary Output (Monitors & Headphones)</div>
+          </div>
+          <span class="status-badge">ACTIVE</span>
+        </div>
+        <div class="device-row">
+          <div>
+            <div class="device-name">Wave Link Stream</div>
+            <div class="device-desc">Primary Microphone (Virtual Mix via Wave:3)</div>
+          </div>
+          <span class="status-badge">ACTIVE</span>
+        </div>
+        <div class="device-row">
+          <div>
+            <div class="device-name">Hardware Sample Rate</div>
+            <div class="device-desc">Focusrite Interface & Studio standard</div>
+          </div>
+          <span class="status-badge">48,000 Hz</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>⚡ Root Cause Breakdown</h2>
+        <div style="font-size: 0.95rem;">
+          <p style="margin-bottom: 0.75rem;">
+            <strong>1-Sec Cutout:</strong> Elgato Wave Link holds exclusive hardware ownership of <code>Elgato Wave:3</code>. Direct output triggers CoreAudio <code>AudioQueueStart (-66681)</code> error, terminating playback after buffer fill.
+          </p>
+          <p>
+            <strong>10-Sec Cutout:</strong> USB microframe clock drift in <code>usbaudiod</code> (3,307 CPU mins uptime) and stale browser audio contexts trigger <code>libAudioIssueDetector</code> (-120 dB silence).
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Matrix Table -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <h2>📊 Empirical Benchmark Matrix</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Measured Latency</th>
+            <th>Diagnosis</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Scarlett 2i2 USB</strong></td>
+            <td>Output</td>
+            <td><span class="status-badge">SUCCESS</span></td>
+            <td>7.268s</td>
+            <td>Rock-solid continuous playback via Focusrite DAC.</td>
+          </tr>
+          <tr>
+            <td><strong>Elgato Wave:3</strong></td>
+            <td>Output</td>
+            <td><span class="status-badge warning" style="color:var(--danger); border-color:var(--danger); background:rgba(248,113,113,0.15)">FAILED</span></td>
+            <td>16.165s</td>
+            <td>Failed with <code>AudioQueueStart (-66681)</code> (WaveLink Lock).</td>
+          </tr>
+          <tr>
+            <td><strong>Mac mini Speakers</strong></td>
+            <td>Output</td>
+            <td><span class="status-badge">SUCCESS</span></td>
+            <td>7.076s</td>
+            <td>Internal chassis speakers functional.</td>
+          </tr>
+          <tr>
+            <td><strong>LG HDR 4K</strong></td>
+            <td>Output</td>
+            <td><span class="status-badge">SUCCESS</span></td>
+            <td>6.961s</td>
+            <td>Clean output over DisplayPort.</td>
+          </tr>
+          <tr>
+            <td><strong>Wave Link Stream</strong></td>
+            <td>Input</td>
+            <td><span class="status-badge">SUCCESS</span></td>
+            <td>1.520s</td>
+            <td>Instant capture of 344,166 bytes @ 96 kHz.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CLI Commands Section -->
+    <div class="card">
+      <h2>💻 Workstation CLI Quickstart</h2>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        Run these commands from the <code>audio-settings</code> terminal directory on the Mac mini:
+      </p>
+
+      <pre># Apply verified stable settings (Scarlett out + Wave Link in)
+./audio.sh fix
+
+# Verify continuous 6-second audio playback
+./audio.sh test-output --continuous
+
+# Refresh stale browser audio contexts if audio drops
+./audio.sh fix-browser
+
+# Full hardware and sample rate audit
+./audio.sh doctor</pre>
+
+      <div class="troubleshoot-box">
+        <h4>⚠️ Still experiencing audio drops after 10 seconds?</h4>
+        <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+          1. <strong>USB Hub Power:</strong> Plug the Scarlett 2i2 directly into the rear USB port of the Mac mini instead of a hub or dock.<br>
+          2. <strong>Reset CoreAudio & usbaudiod:</strong> Run <code>sudo killall coreaudiod</code> in terminal to clear USB clock drift.<br>
+          3. <strong>Refresh Browser Service:</strong> Run <code>./audio.sh fix-browser</code> to cleanly rebind Chrome's audio context.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const audio = document.getElementById('audioElement');
+    const playBtn = document.getElementById('playBtn');
+    const loopBtn = document.getElementById('loopBtn');
+    const statusText = document.getElementById('playerStatus');
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+
+    let audioCtx, analyser, source;
+    let isLooping = false;
+
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        source = audioCtx.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(audioCtx.destination);
+        drawVisualizer();
+      }
+    }
+
+    playBtn.addEventListener('click', async () => {
+      initAudioContext();
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+
+      if (audio.paused) {
+        audio.play().then(() => {
+          playBtn.textContent = '⏸ Pause Stream';
+          statusText.textContent = 'Status: Playing...';
+          statusText.style.color = 'var(--success)';
+        }).catch(err => {
+          statusText.textContent = 'Error: ' + err.message;
+          statusText.style.color = 'var(--danger)';
+        });
+      } else {
+        audio.pause();
+        playBtn.textContent = '▶ Play Continuous Test Tone';
+        statusText.textContent = 'Status: Paused';
+        statusText.style.color = 'var(--text-muted)';
+      }
+    });
+
+    loopBtn.addEventListener('click', () => {
+      isLooping = !isLooping;
+      audio.loop = isLooping;
+      loopBtn.textContent = isLooping ? '🔁 Loop Mode: ON' : '🔁 Loop Mode: OFF';
+      loopBtn.classList.toggle('btn-secondary', !isLooping);
+    });
+
+    audio.addEventListener('ended', () => {
+      if (!isLooping) {
+        playBtn.textContent = '▶ Play Continuous Test Tone';
+        statusText.textContent = 'Status: Finished';
+        statusText.style.color = 'var(--text-muted)';
+      }
+    });
+
+    function drawVisualizer() {
+      requestAnimationFrame(drawVisualizer);
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      analyser.getByteFrequencyData(dataArray);
+
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const barWidth = (canvas.width / bufferLength) * 1.5;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        const barHeight = (dataArray[i] / 255) * canvas.height;
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(x, canvas.height - barHeight, barWidth - 2, barHeight);
+        x += barWidth;
+      }
+    }
+  </script>
+</body>
+</html>

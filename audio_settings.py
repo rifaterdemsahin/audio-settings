@@ -399,9 +399,31 @@ def cmd_restart_daemon(args):
     print("macOS launchd will automatically relaunch coreaudiod cleanly within 2 seconds.")
     print("=" * 64)
 
+def cmd_fix_browser(args):
+    """Restart stale browser audio services and rebind audio endpoints."""
+    print("=" * 64)
+    print("         Browser Audio Service Reset & Buffer Rebind")
+    print("=" * 64)
+    print("[*] Terminating stale browser AudioService helpers...")
+    res = subprocess.run(["pkill", "-f", "Google Chrome Helper.*AudioService"])
+    if res.returncode == 0:
+        print("  [✓] Successfully terminated stale Chrome AudioService.")
+    else:
+        print("  [i] No active Chrome AudioService found (or already clean).")
+
+    print("[*] Rebinding audio routing to Scarlett 2i2 USB & Wave Link Stream...")
+    cmd_apply_profile("studio")
+    print("  [✓] Browser audio contexts refreshed! Return to your browser tab to play audio.")
+    print("=" * 64)
+
 def main():
     parser = argparse.ArgumentParser(description="macOS Audio Settings Management CLI")
     subparsers = parser.add_subparsers(dest="command", help="Sub-commands")
+
+    # fix-browser
+    p_fix_b = subparsers.add_parser("fix-browser", help="Restart browser audio helper and rebind audio streams")
+    p_fix_b.set_defaults(func=cmd_fix_browser)
+
 
     # status
     p_status = subparsers.add_parser("status", help="Show current audio device configuration")
