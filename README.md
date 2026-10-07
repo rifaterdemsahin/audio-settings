@@ -154,19 +154,36 @@ sudo killall coreaudiod
 ```
 macOS `launchd` will automatically restart both `coreaudiod` and `usbaudiod` cleanly within 2 seconds without requiring a reboot.
 
-### If Audio Cuts Out in Web Browser (Chrome/Safari)
+---
+
+## 7. Permanent System & Hardware Optimization Guide
+
+To permanently eliminate CoreAudio stalls, 1-second aborts, and 10-second buffer cutouts on this Mac mini, follow these steps:
+
+### Step 1: Remove Obsolete & Conflicting Audio HAL Drivers
+Over years of macOS updates, old virtual drivers accumulate in `/Library/Audio/Plug-Ins/HAL/` and inject legacy code into `coreaudiod`:
+- **`MSTeamsAudioDevice.driver`** (v2020.42 from **2020**): Deprecated by Microsoft; modern Teams uses native macOS audio. Causes device switching delays.
+- **`WaveLinkVirtualAudio.driver`** (v1.0.3 from **2020**): Conflicting duplicate alongside the modern `WaveLink3VirtualAudio.driver` (v1.6).
+- **`ACE.driver`** (v2023): Rogue Amoeba capture driver; causes HAL overhead if Audio Hijack/Loopback is not actively used.
+
+**Safe Removal Command (Backup & Remove):**
 ```bash
-./audio.sh fix-browser
+sudo mkdir -p /Library/Audio/Plug-Ins/HAL_Backup
+sudo mv /Library/Audio/Plug-Ins/HAL/MSTeamsAudioDevice.driver /Library/Audio/Plug-Ins/HAL_Backup/
+sudo mv /Library/Audio/Plug-Ins/HAL/WaveLinkVirtualAudio.driver /Library/Audio/Plug-Ins/HAL_Backup/
+sudo killall coreaudiod
 ```
 
-### Sample Rates for Video Production (48 kHz Standard)
-In professional video production (OBS, DaVinci Resolve, Final Cut Pro, Premiere):
-- Standard sample rate is **48,000 Hz (48 kHz)**.
-- If **Wave Link Stream** is configured at `96,000 Hz` while **Scarlett** is at `48,000 Hz`, open:
-  `/Applications/Utilities/Audio MIDI Setup.app`
-  and set the Format for all devices to **48,000 Hz**.
+### Step 2: Disable Apple Continuity Microphone (Eliminates 2-Minute Stalls)
+Wireless handshakes with sleeping iPhones (`StudioiPhone14 Microphone`) cause CoreAudio to hang whenever apps enumerate audio devices.
+- Open **System Settings** -> **General** -> **AirPlay & Continuity**.
+- Toggle **Continuity Camera** to **OFF** (or disconnect the iPhone from Mac audio).
 
-### Continuity Camera/Microphone Stall
-If an iPhone is paired via Continuity Camera (`StudioiPhone14`), CoreAudio queries may stall if the phone is asleep or out of range. 
-To disable Continuity Camera if not needed:
-`System Settings` -> `General` -> `AirPlay & Continuity` -> toggle off **Continuity Camera**.
+### Step 3: Plug Focusrite Scarlett 2i2 Directly into Mac mini
+The Scarlett is currently connected through a **CalDigit TS4 dock**. Thunderbolt docks multiplexing video and high-bandwidth data cause USB microframe clock drift (`usbaudiod calcError > 12,000 ns`), cutting off audio after ~10 seconds.
+- **Action**: Plug the Scarlett 2i2 USB cable **directly into one of the rear ports on the Mac mini chassis**.
+
+### Step 4: Decide on Elgato Wave Link Startup
+- If you use **Focusrite Scarlett** for main audio: Remove **Elgato Wave Link** from **System Settings -> General -> Login Items**. Without Wave Link running, the `Elgato Wave:3` works as a standard plug-and-play USB mic with zero exclusive lock errors (`-66681`).
+- If you **use Wave Link**: Set the Monitor Output inside the Wave Link app to `Scarlett 2i2 USB`, and set all devices to **48,000 Hz** in `/Applications/Utilities/Audio MIDI Setup.app`.
+
