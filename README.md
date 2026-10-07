@@ -2,6 +2,9 @@
 
 Automated configuration, diagnostic, and profile management suite for audio settings on Apple Mac mini video production workstations.
 
+> [!NOTE]
+> For the comprehensive diagnostic analysis explaining the 1-second audio cutout issue (CoreAudio Error `-66681` and Wave Link locks), read the full [Diagnostic & Failure Analysis Report](REPORT.md).
+
 ---
 
 ## 1. Problem Overview & Diagnosis
